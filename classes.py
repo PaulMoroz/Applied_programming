@@ -93,7 +93,7 @@ class CinemaHall:
             return False
         elif i == len(self.timeTable):
             added = True
-            self.timeTable.append(film)
+            self.timeTable.append(film) 
         elif time + Time(0, 10) + film.duration < self.timeTable[i].startTime:
             self.timeTable.insert(i, film)
             added = True
