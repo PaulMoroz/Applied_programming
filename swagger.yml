@@ -1,0 +1,141 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Cinema service
+  description: ''
+paths:
+  /film:
+    post:
+      tags:
+        - Film
+      description: Add new film
+      summary: Add new film
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/film'
+      responses:
+        '201':
+          description: Film added
+  
+  /film/{filmID}:
+    get:
+      tags:
+        - Film
+      description: Get info about film
+      summary: Get info about film
+      parameters:
+      - name: filmID
+        in: path
+        required: true
+        schema: 
+          type: integer
+          format: int32
+      responses:
+        '200':
+          description: Timetable info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/film'
+        '404':
+          description: 'Film not found!'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/film'
+        
+    delete:
+      tags:
+        - Film
+      description: Get info about film
+      summary: Get info about film
+      parameters:
+      - name: filmID
+        in: path
+        required: true
+        schema: 
+          type: integer
+          format: int32
+      responses:
+        '200':
+          description: 'Film deleted'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/hall'
+        404:
+          description: 'Film not found'
+        
+    
+  
+  /hall:
+    get:
+      tags:
+        - Hall
+      description: Add new film
+      summary: Add new film
+      responses:
+        '200':
+          description: Timetable info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/hall'
+        
+components:
+  schemas:
+    film:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+        genre:
+          type: integer
+          format: int32
+        duration:
+          type: string
+          example: '02:00'
+      nullable: false
+    
+    genre:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+      nullable: false
+    
+    hall:
+      type: object
+      properties:
+        places:
+          type: integer
+          format: int32
+        timetable:
+          type: array
+          items:
+          $ref: '#/components/schemas/film'
+          
+  securitySchemes:
+    bank_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: http://petstore.swagger.io/oauth/dialog
+          scopes:
+            write:schedules: modify credits in your bank
+            write:users: modify user info
+            read:users: read user info
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/imaohw/cinema/1.0.0
