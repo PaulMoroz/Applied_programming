@@ -21,7 +21,6 @@ def get_add_genres():
             db.session.add(g)
             db.session.commit()
             return genre_schema.jsonify(g)
-
         except ValidationError as err:
             return jsonify(message=err.messages, status=405)  #
 
