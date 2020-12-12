@@ -1,5 +1,5 @@
 from films import app, db, ma
-from flask import jsonify, request
+from flask import jsonify, request, make_response
 from .models import *
 
 genre_schema = GenreSchema()
@@ -12,6 +12,10 @@ def get_add_genres():
         all_genres = Genre.query.all()
         return genre_schemas.jsonify(all_genres)
     else:
+        # print('beep')
+        # query_pass = request.args.get('password')
+        # print("Q:PASS", query_pass)
+
         name = request.json['name']
         description = request.json['description']
         g = Genre(name=name, description=description)
@@ -25,16 +29,19 @@ def get_add_genres():
             return jsonify(message=err.messages, status=405)  #
 
 
-@app.route("/genre/<genre_id>", methods=['GET'])
+@app.route("/genre/<int:genre_id>", methods=['GET'])
 def get_genre(genre_id):
     genre = Genre.query.get(genre_id)
+    if genre is None:
+        return jsonify(message='genre not found', status=404)
     return genre_schema.jsonify(genre)
 
 
-@app.route("/genre/<genre_id>", methods=['PUT'])
+@app.route("/genre/<int:genre_id>", methods=['PUT'])
 def update_genre(genre_id):
     genre = Genre.query.get(genre_id)
-    print("Genre found: ", genre)
+    if genre is None:
+        return jsonify(message='genre not found', status=404)
     req_data = request.get_json()
     try:
         req_data = genre_schema.dump(req_data)
@@ -44,12 +51,16 @@ def update_genre(genre_id):
         db.session.commit()
         return jsonify(req_data)
     except ValidationError as err:
-        return jsonify(message=err.messages, status=405)  #
+        return jsonify(message=err.messages, status=405)
 
 
-@app.route("/genre/<genre_id>", methods=['DELETE'])
+@app.route("/genre/<int:genre_id>", methods=['DELETE'])
 def delete_genre(genre_id):
     genre = Genre.query.get(genre_id)
-    db.session.delete(genre)
-    db.session.commit()
-    return genre_schema.jsonify(genre)
+    if genre is not None:
+        db.session.delete(genre)
+        db.session.commit()
+        return genre_schema.jsonify(genre)
+    else:
+        return jsonify(message='genre not found', status=404)
+        # return make_response('genre not found', 404)

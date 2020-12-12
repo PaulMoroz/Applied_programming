@@ -17,7 +17,7 @@ class Genre(db.Model):
 class GenreSchema(ma.Schema):
     id = fields.Integer(allow_none=True)
     name = fields.Str(validate=validate.Length(min=1, max=64))
-    description = fields.Str(validate=validate.Length(max=200))
+    description = fields.Str(validate=validate.Length(min=1, max=200))
 
     class Meta:
         model = Genre
