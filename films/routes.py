@@ -5,6 +5,30 @@ from .models import *
 genre_schema = GenreSchema()
 genre_schemas = GenreSchema(many=True)
 
+film_schema = FilmSchema()
+film_schemas = FilmSchema(many=True)
+
+
+@app.route("/film", methods=['GET', 'POST'])
+def get_add_films():
+    if request.method == 'GET':
+        all_films = Film.query.all()
+        return film_schemas.jsonify(all_films)
+    else:
+        name = request.json['name']
+        description = request.json['description']
+        duration = request.json['duration']
+        genre_id = request.json['genre_id']
+        f = Film(name=name, description=description, duration=duration, genre_id=genre_id)
+        film_data = film_schema.dump(f)
+        try:
+            FilmSchema().load(film_data)
+            db.session.add(f)
+            db.session.commit()
+            return film_schema.jsonify(f)
+        except ValidationError as err:
+            return jsonify(message=err.messages, status=405)
+
 
 @app.route("/genre", methods=['GET', 'POST'])
 def get_add_genres():
@@ -26,7 +50,7 @@ def get_add_genres():
             db.session.commit()
             return genre_schema.jsonify(g)
         except ValidationError as err:
-            return jsonify(message=err.messages, status=405)  #
+            return jsonify(message=err.messages, status=405)
 
 
 @app.route("/genre/<int:genre_id>", methods=['GET'])
