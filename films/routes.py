@@ -1,4 +1,4 @@
-from films import app, db, ma
+from films import app, db, ma, bcrypt
 from flask import jsonify, request, make_response
 from .models import *
 
@@ -7,6 +7,37 @@ genre_schemas = GenreSchema(many=True)
 
 film_schema = FilmSchema()
 film_schemas = FilmSchema(many=True)
+
+user_schema = UserSchema()
+user_schemas = UserSchema(many=True)
+
+
+@app.route("/user", methods=['GET', 'POST'])
+def get_add_user():
+    if request.method == 'GET':
+        all_users = User.query.all()
+        return user_schemas.jsonify(all_users)
+    # POST method
+    else:
+        query_username = request.args.get('username')  # query parameters
+        query_pass = request.args.get('password')
+
+        if User.query.filter_by(username=query_username).first() is not None:  # if user is already registered
+            return jsonify(message='user with same username exists', status=403)
+        else:  # register if is not
+            print('does not exists')
+            # checking if data is valid before hashing, because it will change the pword length
+            u = User(username=query_username, password=query_pass)
+            user_data = user_schema.dump(u)
+            try:
+                UserSchema().load(user_data)
+                h_query_pass = bcrypt.generate_password_hash(query_pass)  # hashing a password here
+                u = User(username=query_username, password=h_query_pass)
+                db.session.add(u)
+                db.session.commit()
+                return user_schema.jsonify(u)
+            except ValidationError as err:
+                return jsonify(message=err.messages, status=405)
 
 
 @app.route("/film", methods=['GET', 'POST'])

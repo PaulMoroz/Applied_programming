@@ -3,6 +3,24 @@ from marshmallow import Schema, fields, validate, ValidationError
 from datetime import datetime
 
 
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(32), unique=True)
+    password = db.Column(db.String(12))
+
+    def __repr__(self):
+        return f"User(id: '{self.id}', name: '{self.username}, description: '{self.password}')"
+
+
+class UserSchema(ma.Schema):
+    id = fields.Integer(allow_none=True)
+    username = fields.Str(validate=validate.Length(min=1, max=32))
+    password = fields.Str(validate=validate.Length(min=1, max=12))
+
+    class Meta:
+        model = User
+
+
 class Genre(db.Model):
     __tablename__ = 'genre'
 
