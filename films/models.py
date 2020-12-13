@@ -58,6 +58,10 @@ class FilmSchema(ma.Schema):
     name = fields.Str(validate=validate.Length(min=1, max=64))
     description = fields.Str(validate=validate.Length(min=1, max=400))
     genre_id = fields.Integer(required=True)
+    duration = fields.DateTime(allow_none=True)
+
+    class Meta:
+        model = Film
 
 
 class Session(db.Model):

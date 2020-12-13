@@ -12,7 +12,8 @@ user_schema = UserSchema()
 user_schemas = UserSchema(many=True)
 
 
-@app.route("/user", methods=['GET', 'POST'])
+# http://127.0.0.1:5000/user/ to get. or send a json to post
+@app.route("/user/", methods=['GET', 'POST'])
 def get_add_user():
     if request.method == 'GET':
         all_users = User.query.all()
@@ -35,11 +36,46 @@ def get_add_user():
                 u = User(username=query_username, password=h_query_pass)
                 db.session.add(u)
                 db.session.commit()
-                return user_schema.jsonify(u)
+                return jsonify(message='user was created', status=201)
+                # return user_schema.jsonify(u)
             except ValidationError as err:
                 return jsonify(message=err.messages, status=405)
 
 
+# http://127.0.0.1:5000/user/login/?username=taras&password=admin
+@app.route("/user/login/", methods=['POST'])
+def login():
+    query_username = request.args.get('username')  # query parameters
+    query_pass = request.args.get('password')
+    u = User.query.filter_by(username=query_username).first()
+    if u is not None:
+        if bcrypt.check_password_hash(u.password, query_pass):
+            return jsonify(message='login approved', status=200)
+    return jsonify(message='wrong username or password', status=403)
+
+
+# http://127.0.0.1:5000/user/1
+@app.route("/user/<int:user_id>", methods=['GET'])
+def get_user(user_id):
+    u = User.query.get(user_id)
+    if u is None:
+        return jsonify(message='user not found', status=404)
+    return user_schema.jsonify(u)
+
+
+# http://127.0.0.1:5000/user/1
+@app.route("/user/<int:user_id>", methods=['DELETE'])
+def delete_user(user_id):
+    user = User.query.get(user_id)
+    if user is not None:
+        db.session.delete(user)
+        db.session.commit()
+        return user_schema.jsonify(user)
+    else:
+        return jsonify(message='user not found', status=404)
+
+
+# http://127.0.0.1:5000/film/ to get. or send a json to post
 @app.route("/film", methods=['GET', 'POST'])
 def get_add_films():
     if request.method == 'GET':
@@ -56,9 +92,50 @@ def get_add_films():
             FilmSchema().load(film_data)
             db.session.add(f)
             db.session.commit()
-            return film_schema.jsonify(f)
+            # return film_schema.jsonify(f)
+            return jsonify(message='film was added', status=201)
         except ValidationError as err:
             return jsonify(message=err.messages, status=405)
+
+
+# http://127.0.0.1:5000/film/1
+@app.route("/film/<int:film_id>", methods=['GET'])
+def get_film(film_id):
+    film = Film.query.get(film_id)
+    if film is None:
+        return jsonify(message='film not found', status=404)
+    return film_schema.jsonify(film)
+
+
+@app.route("/film/<int:film_id>", methods=['PUT'])
+def update_film(film_id):
+    film = Film.query.get(film_id)
+    if film is None:
+        return jsonify(message='film not found', status=404)
+    req_data = request.get_json()
+    try:
+        req_data = film_schema.dump(req_data)
+        f = FilmSchema().load(req_data)
+        film.name = f['name']
+        film.description = f['description']
+        film.genre_id = f['genre_id']
+        # film.duration = f['duration']
+        db.session.commit()
+        return jsonify(req_data)
+    except ValidationError as err:
+        return jsonify(message=err.messages, status=405)
+
+
+# http://127.0.0.1:5000/film/1
+@app.route("/film/<int:film_id>", methods=['DELETE'])
+def delete_film(film_id):
+    film = Film.query.get(film_id)
+    if film is not None:
+        db.session.delete(film)
+        db.session.commit()
+        return film_schema.jsonify(film)
+    else:
+        return jsonify(message='genre not found', status=404)
 
 
 @app.route("/genre", methods=['GET', 'POST'])
@@ -67,10 +144,6 @@ def get_add_genres():
         all_genres = Genre.query.all()
         return genre_schemas.jsonify(all_genres)
     else:
-        # print('beep')
-        # query_pass = request.args.get('password')
-        # print("Q:PASS", query_pass)
-
         name = request.json['name']
         description = request.json['description']
         g = Genre(name=name, description=description)
@@ -79,7 +152,8 @@ def get_add_genres():
             GenreSchema().load(genre_data)
             db.session.add(g)
             db.session.commit()
-            return genre_schema.jsonify(g)
+            return jsonify(message='genre was added', status=201)
+            # return genre_schema.jsonify(g)
         except ValidationError as err:
             return jsonify(message=err.messages, status=405)
 
