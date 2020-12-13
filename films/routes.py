@@ -11,6 +11,9 @@ film_schemas = FilmSchema(many=True)
 user_schema = UserSchema()
 user_schemas = UserSchema(many=True)
 
+session_schema = SessionSchema()
+session_schemas = SessionSchema(many=True)
+
 
 # http://127.0.0.1:5000/user/ to get. or send a json to post
 @app.route("/user/", methods=['GET', 'POST'])
@@ -136,6 +139,61 @@ def delete_film(film_id):
         return film_schema.jsonify(film)
     else:
         return jsonify(message='genre not found', status=404)
+
+
+@app.route("/hall/session", methods=['GET', 'POST'])
+def get_add_sessions():
+    if request.method == 'GET':
+        all_sessions = Session.query.all()
+        return session_schemas.jsonify(all_sessions)
+    else:
+        film_id = request.json['film_id']
+        start_time = request.json['start_time']
+        s = Session(film_id=film_id, start_time=start_time)
+        session_data = session_schema.dump(s)
+        try:
+            SessionSchema().load(session_data)
+            db.session.add(s)
+            db.session.commit()
+            return jsonify(message='session was added', status=201)
+        except ValidationError as err:
+            return jsonify(message=err.messages, status=405)
+
+
+@app.route("/hall/<int:session_id>", methods=['GET'])
+def get_session(session_id):
+    session = Session.query.get(session_id)
+    if session is None:
+        return jsonify(message='session not found', status=404)
+    return session_schema.jsonify(session)
+
+
+@app.route("/hall/<int:session_id>", methods=['PUT'])
+def update_session(session_id):
+    session = Session.query.get(session_id)
+    if session is None:
+        return jsonify(message='session not found', status=404)
+    req_data = request.get_json()
+    try:
+        req_data = session_schema.dump(req_data)
+        s = SessionSchema().load(req_data)
+        session.film_id = s['film_id']
+        session.start_time = s['start_time']
+        db.session.commit()
+        return jsonify(req_data)
+    except ValidationError as err:
+        return jsonify(message=err.messages, status=405)
+
+
+@app.route("/hall/<int:session_id>", methods=['DELETE'])
+def delete_session(session_id):
+    session = Session.query.get(session_id)
+    if session is not None:
+        db.session.delete(session)
+        db.session.commit()
+        return session_schema.jsonify(session)
+    else:
+        return jsonify(message='session not found', status=404)
 
 
 @app.route("/genre", methods=['GET', 'POST'])

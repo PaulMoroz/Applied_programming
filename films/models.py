@@ -65,6 +65,8 @@ class FilmSchema(ma.Schema):
 
 
 class Session(db.Model):
+    __tablename__ = 'session'
+
     id = db.Column(db.Integer, primary_key=True)
     film_id = db.Column(db.Integer, db.ForeignKey('film.id', ondelete="cascade"), nullable=False, unique=True)
     start_time = db.Column(db.DateTime, default=datetime.utcnow)
@@ -76,6 +78,10 @@ class Session(db.Model):
 class SessionSchema(ma.Schema):
     id = fields.Integer(allow_none=True)
     film_id = fields.Integer(required=True)
+    start_time = fields.DateTime(allow_none=True)
+
+    class Meta:
+        model = Session
 
 
 class Hall(db.Model):
