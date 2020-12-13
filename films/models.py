@@ -4,6 +4,8 @@ from datetime import datetime
 
 
 class User(db.Model):
+    __tablename__ = 'user'
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(32), unique=True)
     password = db.Column(db.String(12))
@@ -42,6 +44,8 @@ class GenreSchema(ma.Schema):
 
 
 class Film(db.Model):
+    __tablename__ = 'film'
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     description = db.Column(db.Text, nullable=False)
@@ -69,15 +73,17 @@ class Session(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     film_id = db.Column(db.Integer, db.ForeignKey('film.id', ondelete="cascade"), nullable=False, unique=True)
+    hall_id = db.Column(db.Integer, db.ForeignKey('hall.id', ondelete="cascade"), nullable=False)
     start_time = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f"Session(id: '{self.id}', film_id: '{self.film_id}, start_time: '{self.start_time}')"
+        return f"Session(id: '{self.id}', film_id: '{self.film_id}, start_time: '{self.start_time}', '{self.hall_id}')"
 
 
 class SessionSchema(ma.Schema):
     id = fields.Integer(allow_none=True)
     film_id = fields.Integer(required=True)
+    hall_id = fields.Integer(required=True)
     start_time = fields.DateTime(allow_none=True)
 
     class Meta:
@@ -85,9 +91,11 @@ class SessionSchema(ma.Schema):
 
 
 class Hall(db.Model):
+    __tablename__ = 'hall'
+
     id = db.Column(db.Integer, primary_key=True)
-    places = db.Column(db.Integer, index=True, unique=True)
-    session_id = db.Column(db.Integer, db.ForeignKey('session.id', ondelete="cascade"), nullable=False, unique=True)
+    places = db.Column(db.Integer)
+    session_id = db.Column(db.Integer, db.ForeignKey('session.id', ondelete="cascade"), nullable=True, unique=True)
 
     def __repr__(self):
         return f"Hall(id: '{self.id}', places: '{self.places}, session_id: '{self.session_id}')"
@@ -96,4 +104,7 @@ class Hall(db.Model):
 class HallSchema(ma.Schema):
     id = fields.Integer(allow_none=True)
     places = fields.Integer(required=True)
-    session_id = fields.Integer(required=True)
+    session_id = fields.Integer(allow_none=True)
+
+    class Meta:
+        model = Hall

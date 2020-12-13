@@ -14,6 +14,9 @@ user_schemas = UserSchema(many=True)
 session_schema = SessionSchema()
 session_schemas = SessionSchema(many=True)
 
+hall_schema = HallSchema()
+hall_schemas = HallSchema(many=True)
+
 
 # http://127.0.0.1:5000/user/ to get. or send a json to post
 @app.route("/user/", methods=['GET', 'POST'])
@@ -141,6 +144,69 @@ def delete_film(film_id):
         return jsonify(message='genre not found', status=404)
 
 
+@app.route("/hall", methods=['GET', 'POST'])
+def get_add_halls():
+    if request.method == 'GET':
+        all_halls = Hall.query.all()
+        return hall_schemas.jsonify(all_halls)
+    else:
+        places = request.json['places']
+        session_id = request.json['session_id']
+        h = Hall(places=places, session_id=session_id)
+        hall_data = hall_schema.dump(h)
+        try:
+            HallSchema().load(hall_data)
+            db.session.add(h)
+            db.session.commit()
+            return jsonify(message='hall was created', status=201)
+            # return genre_schema.jsonify(g)
+        except ValidationError as err:
+            return jsonify(message=err.messages, status=405)
+
+
+@app.route("/hall/<int:hall_id>", methods=['GET'])
+def get_hall(hall_id):
+    hall = Hall.query.get(hall_id)
+    if hall is None:
+        return jsonify(message='hall not found', status=404)
+    return hall_schema.jsonify(hall)
+
+
+@app.route("/hall/<int:hall_id>", methods=['PUT'])
+def update_hall(hall_id):
+    hall = Hall.query.get(hall_id)
+    if hall is None:
+        return jsonify(message='hall not found', status=404)
+    req_data = request.get_json()
+    try:
+        req_data = hall_schema.dump(req_data)
+        h = HallSchema().load(req_data)
+        hall.places = h['places']
+        hall.session_id = h['session_id']
+        db.session.commit()
+        return jsonify(req_data)
+    except ValidationError as err:
+        return jsonify(message=err.messages, status=405)
+
+
+# delete hall and related sessions
+@app.route("/hall/<int:hall_id>", methods=['DELETE'])
+def delete_hall(hall_id):
+    hall = Hall.query.get(hall_id)
+    hall_sessions = Session.query.filter_by(hall_id=hall_id).all()
+    if hall_sessions is not None:
+        for i in range(len(hall_sessions)):
+            db.session.delete(Session.query.filter_by(hall_id=hall_id).first())
+
+    if hall is not None:
+        print(hall.session_id)
+        db.session.delete(hall)
+        db.session.commit()
+        return hall_schema.jsonify(hall)
+    else:
+        return jsonify(message='hall not found', status=404)
+
+
 @app.route("/hall/session", methods=['GET', 'POST'])
 def get_add_sessions():
     if request.method == 'GET':
@@ -149,7 +215,8 @@ def get_add_sessions():
     else:
         film_id = request.json['film_id']
         start_time = request.json['start_time']
-        s = Session(film_id=film_id, start_time=start_time)
+        hall_id = request.json['hall_id']
+        s = Session(film_id=film_id, start_time=start_time, hall_id=hall_id)
         session_data = session_schema.dump(s)
         try:
             SessionSchema().load(session_data)
@@ -179,6 +246,7 @@ def update_session(session_id):
         s = SessionSchema().load(req_data)
         session.film_id = s['film_id']
         session.start_time = s['start_time']
+        session.hall_id = s['hall_id']
         db.session.commit()
         return jsonify(req_data)
     except ValidationError as err:
