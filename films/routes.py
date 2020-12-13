@@ -60,6 +60,25 @@ def login():
     return jsonify(message='wrong username or password', status=403)
 
 
+@app.route("/user/<int:user_id>", methods=['PUT'])
+def update_user(user_id):
+    user = User.query.get(user_id)
+    if user is None:
+        return jsonify(message='user not found', status=404)
+    req_data = request.get_json()
+    try:
+        req_data = user_schema.dump(req_data)
+        u = UserSchema().load(req_data)
+        user.username = u['username']
+        if not bcrypt.check_password_hash(user.password, u['password']):
+            print("password was changed")
+            user.password = bcrypt.generate_password_hash(u['password'])
+        db.session.commit()
+        return jsonify(req_data)
+    except ValidationError as err:
+        return jsonify(message=err.messages, status=405)
+
+
 # http://127.0.0.1:5000/user/1
 @app.route("/user/<int:user_id>", methods=['GET'])
 def get_user(user_id):
