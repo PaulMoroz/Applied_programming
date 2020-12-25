@@ -1,6 +1,7 @@
-from films import app, db, ma, bcrypt
-from flask import jsonify, request, make_response
+from films import app, db, ma, bcrypt, auth
+from flask import jsonify, request, make_response, abort
 from .models import *
+
 
 genre_schema = GenreSchema()
 genre_schemas = GenreSchema(many=True)
@@ -18,34 +19,55 @@ hall_schema = HallSchema()
 hall_schemas = HallSchema(many=True)
 
 
+@auth.verify_password
+def verify(username, password):   # буде викликана  для перевірки що поєднання імені користувача та пароля є дійсним.
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        abort(401)
+    return bcrypt.check_password_hash(user.password, password)
+
+
+# @app.route("/")
+# def authorization():
+#     if request.authorization
+#     query_username = request.args.get('username')
+#     query_pass = request.args.get('password')
+#     u = User.query.filter_by(username=query_username).first()
+#     if u is not None:
+#         return jsonify(message='OK', status=200)
+#     return jsonify(message='wrong username or password', status=403)
+
+
 # http://127.0.0.1:5000/user/ to get. or send a json to post
-@app.route("/user/", methods=['GET', 'POST'])
-def get_add_user():
-    if request.method == 'GET':
+@app.route("/user/", methods=['GET'])
+@auth.login_required()
+def get_all_users():
         all_users = User.query.all()
         return user_schemas.jsonify(all_users)
-    # POST method
-    else:
-        query_username = request.args.get('username')  # query parameters
-        query_pass = request.args.get('password')
 
-        if User.query.filter_by(username=query_username).first() is not None:  # if user is already registered
-            return jsonify(message='user with same username exists', status=403)
-        else:  # register if is not
-            print('does not exists')
-            # checking if data is valid before hashing, because it will change the pword length
-            u = User(username=query_username, password=query_pass)
-            user_data = user_schema.dump(u)
-            try:
-                UserSchema().load(user_data)
-                h_query_pass = bcrypt.generate_password_hash(query_pass)  # hashing a password here
-                u = User(username=query_username, password=h_query_pass)
-                db.session.add(u)
-                db.session.commit()
-                return jsonify(message='user was created', status=201)
-                # return user_schema.jsonify(u)
-            except ValidationError as err:
-                return jsonify(message=err.messages, status=405)
+
+@app.route("/user/", methods=['POST'])
+def add_user():
+    query_username = request.args.get('username')  # query parameters
+    query_pass = request.args.get('password')
+
+    if User.query.filter_by(username=query_username).first() is not None:  # if user is already registered
+        return jsonify(message='user with same username exists', status=403)
+    else:  # register if is not
+        print('does not exists')
+        # checking if data is valid before hashing, because it will change the pword length
+        u = User(username=query_username, password=query_pass)
+        user_data = user_schema.dump(u)
+        try:
+            UserSchema().load(user_data)
+            h_query_pass = bcrypt.generate_password_hash(query_pass)  # hashing a password here
+            u = User(username=query_username, password=h_query_pass)
+            db.session.add(u)
+            db.session.commit()
+            return jsonify(message='user was created', status=201)
+            # return user_schema.jsonify(u)
+        except ValidationError as err:
+            return jsonify(message=err.messages, status=405)
 
 
 # http://127.0.0.1:5000/user/login/?username=taras&password=admin
@@ -60,7 +82,14 @@ def login():
     return jsonify(message='wrong username or password', status=403)
 
 
+@app.route("/user/logout/", methods=['GET'])
+@auth.login_required
+def logout():
+    return "You are log out"
+
+
 @app.route("/user/<int:user_id>", methods=['PUT'])
+@auth.login_required()
 def update_user(user_id):
     user = User.query.get(user_id)
     if user is None:
@@ -81,6 +110,7 @@ def update_user(user_id):
 
 # http://127.0.0.1:5000/user/1
 @app.route("/user/<int:user_id>", methods=['GET'])
+@auth.login_required()
 def get_user(user_id):
     u = User.query.get(user_id)
     if u is None:
@@ -90,6 +120,7 @@ def get_user(user_id):
 
 # http://127.0.0.1:5000/user/1
 @app.route("/user/<int:user_id>", methods=['DELETE'])
+@auth.login_required()
 def delete_user(user_id):
     user = User.query.get(user_id)
     if user is not None:
@@ -102,6 +133,7 @@ def delete_user(user_id):
 
 # http://127.0.0.1:5000/film/ to get. or send a json to post
 @app.route("/film", methods=['GET', 'POST'])
+@auth.login_required()
 def get_add_films():
     if request.method == 'GET':
         all_films = Film.query.all()
@@ -125,6 +157,7 @@ def get_add_films():
 
 # http://127.0.0.1:5000/film/1
 @app.route("/film/<int:film_id>", methods=['GET'])
+@auth.login_required()
 def get_film(film_id):
     film = Film.query.get(film_id)
     if film is None:
@@ -133,6 +166,7 @@ def get_film(film_id):
 
 
 @app.route("/film/<int:film_id>", methods=['PUT'])
+@auth.login_required()
 def update_film(film_id):
     film = Film.query.get(film_id)
     if film is None:
@@ -153,6 +187,7 @@ def update_film(film_id):
 
 # http://127.0.0.1:5000/film/1
 @app.route("/film/<int:film_id>", methods=['DELETE'])
+@auth.login_required()
 def delete_film(film_id):
     film = Film.query.get(film_id)
     if film is not None:
@@ -164,6 +199,7 @@ def delete_film(film_id):
 
 
 @app.route("/hall", methods=['GET', 'POST'])
+@auth.login_required()
 def get_add_halls():
     if request.method == 'GET':
         all_halls = Hall.query.all()
@@ -184,6 +220,7 @@ def get_add_halls():
 
 
 @app.route("/hall/<int:hall_id>", methods=['GET'])
+@auth.login_required()
 def get_hall(hall_id):
     hall = Hall.query.get(hall_id)
     if hall is None:
@@ -192,6 +229,7 @@ def get_hall(hall_id):
 
 
 @app.route("/hall/<int:hall_id>", methods=['PUT'])
+@auth.login_required()
 def update_hall(hall_id):
     hall = Hall.query.get(hall_id)
     if hall is None:
@@ -210,6 +248,7 @@ def update_hall(hall_id):
 
 # delete hall and related sessions
 @app.route("/hall/<int:hall_id>", methods=['DELETE'])
+@auth.login_required()
 def delete_hall(hall_id):
     hall = Hall.query.get(hall_id)
     hall_sessions = Session.query.filter_by(hall_id=hall_id).all()
@@ -227,6 +266,7 @@ def delete_hall(hall_id):
 
 
 @app.route("/hall/session", methods=['GET', 'POST'])
+@auth.login_required
 def get_add_sessions():
     if request.method == 'GET':
         all_sessions = Session.query.all()
@@ -247,6 +287,7 @@ def get_add_sessions():
 
 
 @app.route("/hall/<int:session_id>", methods=['GET'])
+@auth.login_required()
 def get_session(session_id):
     session = Session.query.get(session_id)
     if session is None:
@@ -255,6 +296,7 @@ def get_session(session_id):
 
 
 @app.route("/hall/<int:session_id>", methods=['PUT'])
+@auth.login_required()
 def update_session(session_id):
     session = Session.query.get(session_id)
     if session is None:
@@ -273,6 +315,7 @@ def update_session(session_id):
 
 
 @app.route("/hall/<int:session_id>", methods=['DELETE'])
+@auth.login_required()
 def delete_session(session_id):
     session = Session.query.get(session_id)
     if session is not None:
@@ -284,6 +327,7 @@ def delete_session(session_id):
 
 
 @app.route("/genre", methods=['GET', 'POST'])
+@auth.login_required()
 def get_add_genres():
     if request.method == 'GET':
         all_genres = Genre.query.all()
@@ -304,6 +348,7 @@ def get_add_genres():
 
 
 @app.route("/genre/<int:genre_id>", methods=['GET'])
+@auth.login_required()
 def get_genre(genre_id):
     genre = Genre.query.get(genre_id)
     if genre is None:
@@ -312,6 +357,7 @@ def get_genre(genre_id):
 
 
 @app.route("/genre/<int:genre_id>", methods=['PUT'])
+@auth.login_required()
 def update_genre(genre_id):
     genre = Genre.query.get(genre_id)
     if genre is None:
@@ -329,6 +375,7 @@ def update_genre(genre_id):
 
 
 @app.route("/genre/<int:genre_id>", methods=['DELETE'])
+@auth.login_required()
 def delete_genre(genre_id):
     genre = Genre.query.get(genre_id)
     if genre is not None:

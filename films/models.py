@@ -49,7 +49,7 @@ class Film(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     description = db.Column(db.Text, nullable=False)
-    duration = db.Column(db.DateTime, default=datetime.utcnow)
+    duration = db.Column(db.String)
     genre_id = db.Column(db.Integer, db.ForeignKey('genre.id'), nullable=False)
 
     def __repr__(self):
@@ -62,7 +62,7 @@ class FilmSchema(ma.Schema):
     name = fields.Str(validate=validate.Length(min=1, max=64))
     description = fields.Str(validate=validate.Length(min=1, max=400))
     genre_id = fields.Integer(required=True)
-    duration = fields.DateTime(allow_none=True)
+    duration = fields.Str(allow_none=True)
 
     class Meta:
         model = Film
