@@ -1,0 +1,468 @@
+---
+openapi: 3.0.0
+info:
+  title: Cinema service
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/imaohw/cinema/1.0.0
+  description: SwaggerHub API Auto Mocking
+paths:
+  /film:
+    get:
+      tags:
+      - Film
+      summary: Get list of all films
+      description: Get list of all films
+      operationId: getAllFilms
+      responses:
+        "200":
+          description: Films info
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/film'
+      security:
+      - cinema_auth:
+        - read:films
+    post:
+      tags:
+      - Film
+      summary: Add new film
+      description: Add new film
+      operationId: addFilm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/film'
+      responses:
+        "201":
+          description: Film added
+        "405":
+          description: Invalid permission
+      security:
+      - cinema_auth:
+        - write:films
+  /film/{filmID}:
+    get:
+      tags:
+      - Film
+      summary: Get info about film
+      description: Get info about film
+      operationId: getFilmInfo
+      parameters:
+      - name: filmID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Film info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/film'
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Film not found!
+        "405":
+          description: Validation exception
+      security:
+      - cinema_auth:
+        - read:films
+    put:
+      tags:
+      - Film
+      summary: Update an existing film
+      operationId: updatePet
+      parameters:
+      - name: filmID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/film'
+      responses:
+        "200":
+          description: Film info updated
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Film not found
+        "405":
+          description: Validation exception
+      security:
+      - cinema_auth:
+        - write:films
+    delete:
+      tags:
+      - Film
+      summary: Get info about film
+      description: Get info about film
+      operationId: deleteFilm
+      parameters:
+      - name: filmID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Film deleted
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Film not found
+        "405":
+          description: Validation exception
+      security:
+      - cinema_auth:
+        - write:films
+  /hall:
+    get:
+      tags:
+      - Hall
+      summary: Get info about hall
+      description: Get info about hall
+      operationId: getHallInfo
+      responses:
+        "200":
+          description: Timetable info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/hall'
+      security:
+      - cinema_auth:
+        - read:films
+  /hall/session:
+    post:
+      tags:
+      - Hall
+      - Session
+      summary: Add new session
+      description: Add new session
+      operationId: createSession
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/session'
+      responses:
+        "201":
+          description: Session added
+        "403":
+          description: Adding session is impossible
+        "405":
+          description: Validation exception
+      security:
+      - cinema_auth:
+        - write:session
+  /hall/{sessionID}:
+    get:
+      tags:
+      - Hall
+      - Session
+      summary: Get info about session
+      description: Get info about session
+      operationId: getSessionInfo
+      parameters:
+      - name: sessionID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Timetable info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/session'
+        "400":
+          description: Invalid id
+        "404":
+          description: Session not found!
+        "405":
+          description: Validation exception
+      security:
+      - cinema_auth:
+        - read:session
+    put:
+      tags:
+      - Session
+      summary: Update an existing session
+      operationId: updateSession
+      parameters:
+      - name: sessionID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/session'
+      responses:
+        "200":
+          description: Session info updated
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Session not found
+        "405":
+          description: Validation exception
+      security:
+      - cinema_auth:
+        - write:session
+    delete:
+      tags:
+      - Hall
+      - Session
+      summary: Delete session
+      description: Delete session
+      operationId: deleteSession
+      parameters:
+      - name: sessionID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Session deleted
+        "400":
+          description: Invalid id
+        "404":
+          description: Session not found!
+        "405":
+          description: Validation exception
+      security:
+      - cinema_auth:
+        - write:session
+  /genre:
+    get:
+      tags:
+      - Genre
+      summary: Get info about all genres
+      description: Get info about all genres
+      operationId: getAllGenres
+      responses:
+        "200":
+          description: Genres info
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/genre'
+        "405":
+          description: Validation exception
+      security:
+      - cinema_auth:
+        - read:genre
+    post:
+      tags:
+      - Genre
+      summary: Add new genre
+      description: Add new genre
+      operationId: addNewGenre
+      responses:
+        "200":
+          description: Genres info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/genre'
+        "405":
+          description: Validation exception
+      security:
+      - cinema_auth:
+        - write:genre
+  /genre/{genreID}:
+    get:
+      tags:
+      - Genre
+      summary: Get info about session
+      description: Get info about session
+      operationId: getGenreDescription
+      parameters:
+      - name: genreID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Get info about genre
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/genre'
+        "400":
+          description: Invalid id
+        "404":
+          description: Genre not found!
+        "405":
+          description: Validation exception
+      security:
+      - cinema_auth:
+        - read:genre
+    put:
+      tags:
+      - Genre
+      summary: Update an existing genre
+      operationId: updateGenre
+      parameters:
+      - name: genreID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/genre'
+      responses:
+        "200":
+          description: Session info updated
+        "400":
+          description: Invalid ID supplied
+        "404":
+          description: Genre not found
+        "405":
+          description: Validation exception
+      security:
+      - cinema_auth:
+        - write:genre
+    delete:
+      tags:
+      - Genre
+      summary: Delete genre
+      description: Delete genre
+      operationId: deleteGenre
+      parameters:
+      - name: genreID
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: Delete genre
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/genre'
+        "400":
+          description: Invalid id
+        "404":
+          description: Genre not found!
+        "405":
+          description: Validation exception
+      security:
+      - cinema_auth:
+        - write:genre
+components:
+  schemas:
+    film:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+        genre:
+          type: integer
+          format: int32
+        duration:
+          type: string
+          format: date-time
+      nullable: false
+    genre:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+      nullable: false
+    session:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        filmID:
+          type: integer
+          format: int32
+        startTime:
+          type: string
+          format: date-time
+      nullable: false
+    hall:
+      type: object
+      properties:
+        places:
+          type: integer
+          format: int32
+        timetable:
+          type: array
+          items:
+            $ref: '#/components/schemas/session'
+  securitySchemes:
+    cinema_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: http://petstore.swagger.io/oauth/dialog
+          scopes:
+            write:films: Set and modify info about films
+            read:films: Read info about films
+            write:genres: Set and modify info about genres
+            read:genres: Read info about genres
+            write:session: Set and modify info about sessions
+            read:session: Read info about sessions
